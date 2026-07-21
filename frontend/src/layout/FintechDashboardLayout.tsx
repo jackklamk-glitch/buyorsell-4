@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 
+import { AiExplainerPanel, type BosRagExplanationViewModel } from "../components/AiExplainerPanel";
 import { MarketHeatmap, type MarketHeatmapTicker } from "../components/MarketHeatmap";
 import { SignalTable, type QuantSignalRow } from "../components/SignalTable";
-import { TickerProfileChart } from "../components/TickerProfileChart";
+import { TickerChart } from "../components/TickerChart";
 import { fintechTheme } from "../theme/tokens";
 import type {
   BosFactorBreakdown,
@@ -103,6 +104,48 @@ export function FintechDashboardLayout({
       })),
     [heatmapNodes, signals],
   );
+  const explanation = useMemo<BosRagExplanationViewModel>(
+    () => ({
+      symbol: ragInsight.symbol,
+      sBos: signals.find((row) => row.symbol === ragInsight.symbol)?.sBos ?? 0,
+      weightBreakdown: {
+        momentum: signals.find((row) => row.symbol === ragInsight.symbol)?.factors.momentum ?? 50,
+        volumeDelta: signals.find((row) => row.symbol === ragInsight.symbol)?.factors.volumeDelta ?? 50,
+        foreignFlow: signals.find((row) => row.symbol === ragInsight.symbol)?.factors.foreignFlow ?? 50,
+        valuation: signals.find((row) => row.symbol === ragInsight.symbol)?.factors.valuation ?? 50,
+      },
+      keyCatalysts: ragInsight.catalysts.map((detail, index) => ({
+        title: `Catalyst ${index + 1}`,
+        detail,
+        citations: [
+          {
+            id: `cat-${index + 1}`,
+            source: "RAG",
+            title: `${ragInsight.symbol} retrieved context ${index + 1}`,
+          },
+        ],
+      })),
+      risks: ragInsight.risks.map((detail, index) => ({
+        title: `Risk ${index + 1}`,
+        detail,
+        citations: [
+          {
+            id: `risk-${index + 1}`,
+            source: "RAG",
+            title: `${ragInsight.symbol} risk context ${index + 1}`,
+          },
+        ],
+      })),
+      actionableScenario: {
+        stance: ragInsight.title,
+        entryZone: ragInsight.scenario.entryZone,
+        stopLoss: ragInsight.scenario.stopLoss,
+        takeProfit: ragInsight.scenario.takeProfit,
+        invalidation: "S_BOS thủng 60 hoặc foreign flow đảo chiều bán ròng mạnh.",
+      },
+    }),
+    [ragInsight, signals],
+  );
 
   const toggleAlerts = () => {
     const next = !localAlertsEnabled;
@@ -165,7 +208,7 @@ export function FintechDashboardLayout({
               onSelectTicker={(symbol) => onSymbolSelect?.(symbol)}
             />
           ) : (
-            <TickerProfileChart bars={ohlcvBars} markers={markers} height={620} />
+            <TickerChart bars={ohlcvBars} markers={markers} height={620} />
           )}
         </section>
 
@@ -175,7 +218,7 @@ export function FintechDashboardLayout({
             title={`${ragInsight.symbol} AI diễn giải`}
             meta="Schema locked"
           />
-          <RagInsightPanel insight={ragInsight} />
+          <AiExplainerPanel explanation={explanation} />
         </aside>
       </section>
     </main>
@@ -306,54 +349,6 @@ function PanelHeader({
       </div>
       {action ?? (meta ? <span className="bos-meta">{meta}</span> : null)}
     </div>
-  );
-}
-
-function RagInsightPanel({ insight }: { insight: RagInsight }) {
-  return (
-    <div className="bos-rag">
-      <p>{insight.summary}</p>
-      <InsightList title="Động lực" items={insight.catalysts} tone="up" />
-      <InsightList title="Rủi ro" items={insight.risks} tone="down" />
-      <div className="bos-scenario">
-        <h3>Kịch bản giao dịch</h3>
-        <dl>
-          <div>
-            <dt>Vùng giải ngân</dt>
-            <dd>{insight.scenario.entryZone}</dd>
-          </div>
-          <div>
-            <dt>Cắt lỗ</dt>
-            <dd>{insight.scenario.stopLoss}</dd>
-          </div>
-          <div>
-            <dt>Chốt lời</dt>
-            <dd>{insight.scenario.takeProfit}</dd>
-          </div>
-        </dl>
-      </div>
-    </div>
-  );
-}
-
-function InsightList({
-  title,
-  items,
-  tone,
-}: {
-  title: string;
-  items: string[];
-  tone: "up" | "down";
-}) {
-  return (
-    <section className="bos-insight-list">
-      <h3 className={tone === "up" ? "bos-up" : "bos-down"}>{title}</h3>
-      <ul>
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </section>
   );
 }
 

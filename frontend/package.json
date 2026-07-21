@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "check": "npm run typecheck",
+    "dev": "vite --host 127.0.0.1",
     "styles": "tailwindcss -i ./src/styles/tailwind.css -o ./dist/styles.css --minify",
     "typecheck": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
     "build": "npm run typecheck && npm run styles && node scripts/build-static.js"
@@ -20,9 +21,11 @@
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^6.0.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vite": "^8.1.5"
   }
 }

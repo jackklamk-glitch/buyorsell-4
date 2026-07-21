@@ -1,6 +1,8 @@
+export { AiExplainerPanel } from "./components/AiExplainerPanel";
 export { InteractiveTreemapHeatmap } from "./components/InteractiveTreemapHeatmap";
 export { MarketHeatmap } from "./components/MarketHeatmap";
 export { SignalTable } from "./components/SignalTable";
+export { TickerChart } from "./components/TickerChart";
 export { TickerProfileChart } from "./components/TickerProfileChart";
 export { VirtualSignalTable } from "./components/VirtualSignalTable";
 export { FintechDashboardLayout } from "./layout/FintechDashboardLayout";
@@ -27,3 +29,8 @@ export type {
 export type {
   QuantSignalRow,
 } from "./components/SignalTable";
+export type {
+  BosRagExplanationViewModel,
+  RagCitation,
+  RagNarrativeItem,
+} from "./components/AiExplainerPanel";

@@ -77,48 +77,50 @@ export function SignalTable({
         ))}
       </div>
 
-      <div style={headerStyle}>
-        <span>Mã CP</span>
-        <span>Ngành</span>
-        <span>Giá Khớp</span>
-        <span>% Tăng/Giảm</span>
-        <span>Khối Lượng</span>
-        <span>Điểm S_BOS</span>
-        <span>Hành Động</span>
-      </div>
+      <div style={tableScrollStyle}>
+        <div style={headerStyle}>
+          <span>Mã CP</span>
+          <span>Ngành</span>
+          <span>Giá Khớp</span>
+          <span>% Tăng/Giảm</span>
+          <span>Khối Lượng</span>
+          <span>Điểm S_BOS</span>
+          <span>Hành Động</span>
+        </div>
 
-      <div ref={parentRef} style={{ ...viewportStyle, height }}>
-        <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
-          {virtualItems.map((virtualRow) => {
-            const row = filteredRows[virtualRow.index];
-            return (
-              <button
-                key={row.id}
-                type="button"
-                onClick={() => onSelectTicker?.(row.symbol)}
-                style={{
-                  ...rowStyle,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <strong>{row.symbol}</strong>
-                <span>{row.sector}</span>
-                <span>{formatCurrency(row.matchedPrice)}</span>
-                <span style={{ color: row.priceChangePct >= 0 ? "#10B981" : "#EF4444" }}>
-                  {row.priceChangePct >= 0 ? "+" : ""}
-                  {row.priceChangePct.toFixed(2)}%
-                </span>
-                <span>{formatNumber(row.volume)}</span>
-                <span style={{ color: getBosTone(row.sBos), fontWeight: 900 }}>
-                  {row.sBos.toFixed(1)}
-                </span>
-                <span style={actionPillStyle(row.signal)}>{row.signal}</span>
-              </button>
-            );
-          })}
-          {filteredRows.length === 0 ? (
-            <div style={emptyStateStyle}>Không có tín hiệu phù hợp bộ lọc.</div>
-          ) : null}
+        <div ref={parentRef} style={{ ...viewportStyle, height }}>
+          <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
+            {virtualItems.map((virtualRow) => {
+              const row = filteredRows[virtualRow.index];
+              return (
+                <button
+                  key={row.id}
+                  type="button"
+                  onClick={() => onSelectTicker?.(row.symbol)}
+                  style={{
+                    ...rowStyle,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <strong>{row.symbol}</strong>
+                  <span>{row.sector}</span>
+                  <span>{formatCurrency(row.matchedPrice)}</span>
+                  <span style={{ color: row.priceChangePct >= 0 ? "#10B981" : "#EF4444" }}>
+                    {row.priceChangePct >= 0 ? "+" : ""}
+                    {row.priceChangePct.toFixed(2)}%
+                  </span>
+                  <span>{formatNumber(row.volume)}</span>
+                  <span style={{ color: getBosTone(row.sBos), fontWeight: 900 }}>
+                    {row.sBos.toFixed(1)}
+                  </span>
+                  <span style={actionPillStyle(row.signal)}>{row.signal}</span>
+                </button>
+              );
+            })}
+            {filteredRows.length === 0 ? (
+              <div style={emptyStateStyle}>Không có tín hiệu phù hợp bộ lọc.</div>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>
@@ -148,6 +150,12 @@ const filterBarStyle: React.CSSProperties = {
   flexWrap: "wrap",
   gap: 8,
   marginBottom: 10,
+};
+
+const tableScrollStyle: React.CSSProperties = {
+  overflowX: "auto",
+  overflowY: "hidden",
+  width: "100%",
 };
 
 function filterButtonStyle(active: boolean): React.CSSProperties {
@@ -180,7 +188,8 @@ const viewportStyle: React.CSSProperties = {
   background: "#0B0E14",
   border: "1px solid #263244",
   borderRadius: 8,
-  overflow: "auto",
+  overflowX: "hidden",
+  overflowY: "auto",
 };
 
 const rowStyle: React.CSSProperties = {
