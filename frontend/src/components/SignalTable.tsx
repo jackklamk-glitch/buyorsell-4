@@ -27,10 +27,10 @@ interface SignalTableProps {
 }
 
 const filters: Array<{ id: SignalFilter; label: string }> = [
-  { id: "all", label: "Tất cả" },
-  { id: "strongBuy", label: "Tín hiệu MUA mạnh" },
-  { id: "volumeSpike", label: "Đột biến Khối lượng" },
-  { id: "foreignNetBuy", label: "Khối ngoại Mua ròng" },
+  { id: "all", label: "Tat ca" },
+  { id: "strongBuy", label: "S_BOS > 70" },
+  { id: "volumeSpike", label: "Dot bien KL" },
+  { id: "foreignNetBuy", label: "NN mua rong" },
 ];
 
 export function SignalTable({
@@ -52,7 +52,7 @@ export function SignalTable({
     () =>
       rows.filter((row) => {
         if (debouncedQuery && !`${row.symbol} ${row.sector}`.toUpperCase().includes(debouncedQuery)) return false;
-        if (activeFilter === "strongBuy") return row.sBos >= 80;
+        if (activeFilter === "strongBuy") return row.sBos > 70;
         if (activeFilter === "volumeSpike") return row.volume >= row.avgVolume20d * 1.8;
         if (activeFilter === "foreignNetBuy") return row.foreignNetValue > 0;
         return true;
@@ -75,7 +75,7 @@ export function SignalTable({
         <input
           aria-label="Quick search ticker"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Tìm mã..."
+          placeholder="Tim ma..."
           style={quickSearchStyle}
           value={query}
         />
@@ -92,65 +92,46 @@ export function SignalTable({
         ))}
       </div>
 
-      <div style={tableScrollStyle}>
-        <div style={headerStyle}>
-          <span>Mã CP</span>
-          <span>Ngành</span>
-          <span>Giá Khớp</span>
-          <span>% Tăng/Giảm</span>
-          <span>Khối Lượng</span>
-          <span>Điểm S_BOS</span>
-          <span>Hành Động</span>
-        </div>
+      <div style={headerStyle}>
+        <span>Ma CP</span>
+        <span>Gia khop</span>
+        <span>% Tang/Giam</span>
+        <span>Khoi luong</span>
+      </div>
 
-        <div ref={parentRef} style={{ ...viewportStyle, height }}>
-          <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative" }}>
-            {virtualItems.map((virtualRow) => {
-              const row = filteredRows[virtualRow.index];
-              return (
-                <button
-                  key={row.id}
-                  type="button"
-                  onClick={() => onSelectTicker?.(row.symbol)}
-                  style={{
-                    ...rowStyle,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                >
+      <div ref={parentRef} style={{ ...viewportStyle, height }}>
+        <div style={{ height: rowVirtualizer.getTotalSize(), position: "relative", width: "100%" }}>
+          {virtualItems.map((virtualRow) => {
+            const row = filteredRows[virtualRow.index];
+            return (
+              <button
+                key={row.id}
+                type="button"
+                onClick={() => onSelectTicker?.(row.symbol)}
+                style={{
+                  ...rowStyle,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <span style={symbolCellStyle}>
                   <strong>{row.symbol}</strong>
-                  <span>{row.sector}</span>
-                  <span style={numericCellStyle}>{formatCurrency(row.matchedPrice)}</span>
-                  <span style={{ color: row.priceChangePct >= 0 ? "#10B981" : "#EF4444" }}>
-                    {row.priceChangePct >= 0 ? "+" : ""}
-                    {row.priceChangePct.toFixed(2)}%
-                  </span>
-                  <span style={numericCellStyle}>{formatNumber(row.volume)}</span>
-                  <span style={{ ...numericCellStyle, color: getBosTone(row.sBos), fontWeight: 900 }}>
-                    {row.sBos.toFixed(1)}
-                  </span>
-                  <span style={actionPillStyle(row.signal)}>{row.signal}</span>
-                </button>
-              );
-            })}
-            {filteredRows.length === 0 ? (
-              <div style={emptyStateStyle}>Không có tín hiệu phù hợp bộ lọc.</div>
-            ) : null}
-          </div>
+                  <small>{row.sector} · {row.signal}</small>
+                </span>
+                <span style={numericCellStyle}>{formatCurrency(row.matchedPrice)}</span>
+                <span style={{ ...numericCellStyle, color: getChangeTone(row.priceChangePct), fontWeight: 900 }}>
+                  {formatChangePct(row.priceChangePct)}
+                </span>
+                <span style={numericCellStyle}>{formatCompactVolume(row.volume)}</span>
+              </button>
+            );
+          })}
+          {filteredRows.length === 0 ? (
+            <div style={emptyStateStyle}>Khong co tin hieu phu hop bo loc.</div>
+          ) : null}
         </div>
       </div>
     </section>
   );
-}
-
-function getBosTone(sBos: number) {
-  if (sBos < 40) return "#EF4444";
-  if (sBos <= 60) return "#F59E0B";
-  if (sBos > 70) return "#10B981";
-  return "#38BDF8";
-}
-
-function formatNumber(value: number) {
-  return Intl.NumberFormat("vi-VN").format(value);
 }
 
 function formatCurrency(value: number) {
@@ -160,10 +141,28 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function formatChangePct(value: number) {
+  if (!Number.isFinite(value)) return "0.00%";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function getChangeTone(value: number) {
+  if (value > 0) return "#10B981";
+  if (value < 0) return "#EF4444";
+  return "#F59E0B";
+}
+
+function formatCompactVolume(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return "0";
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 1 : 2)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 100_000 ? 0 : 1)}K`;
+  return Intl.NumberFormat("vi-VN").format(Math.round(value));
+}
+
 const filterBarStyle: React.CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
+  display: "grid",
   gap: 8,
+  gridTemplateColumns: "repeat(auto-fit, minmax(92px, 1fr))",
   marginBottom: 10,
 };
 
@@ -173,16 +172,11 @@ const quickSearchStyle: React.CSSProperties = {
   borderRadius: 6,
   color: "#E5E7EB",
   fontWeight: 800,
+  gridColumn: "1 / -1",
   minHeight: 34,
-  minWidth: 120,
+  minWidth: 0,
   outline: "none",
   padding: "0 10px",
-};
-
-const tableScrollStyle: React.CSSProperties = {
-  overflowX: "auto",
-  overflowY: "hidden",
-  width: "100%",
 };
 
 function filterButtonStyle(active: boolean): React.CSSProperties {
@@ -199,15 +193,17 @@ function filterButtonStyle(active: boolean): React.CSSProperties {
   };
 }
 
+const tableColumns = "minmax(74px, 1.05fr) minmax(70px, 0.9fr) minmax(88px, 1fr) minmax(88px, 1fr)";
+
 const headerStyle: React.CSSProperties = {
   color: "#94A3B8",
   display: "grid",
   fontSize: 11,
   fontWeight: 900,
-  gap: 10,
-  gridTemplateColumns: "0.75fr 1fr 0.9fr 0.95fr 1fr 0.85fr 0.9fr",
-  minWidth: 820,
-  padding: "10px 12px",
+  gap: 8,
+  gridTemplateColumns: tableColumns,
+  minWidth: 0,
+  padding: "10px 18px 10px 12px",
   textTransform: "uppercase",
 };
 
@@ -217,6 +213,8 @@ const viewportStyle: React.CSSProperties = {
   borderRadius: 8,
   overflowX: "hidden",
   overflowY: "auto",
+  paddingRight: 2,
+  scrollbarGutter: "stable",
 };
 
 const rowStyle: React.CSSProperties = {
@@ -227,37 +225,33 @@ const rowStyle: React.CSSProperties = {
   color: "#E5E7EB",
   cursor: "pointer",
   display: "grid",
-  gap: 10,
-  gridTemplateColumns: "0.75fr 1fr 0.9fr 0.95fr 1fr 0.85fr 0.9fr",
+  gap: 8,
+  gridTemplateColumns: tableColumns,
   left: 0,
   minHeight: 64,
-  minWidth: 820,
-  padding: "10px 12px",
+  minWidth: 0,
+  overflow: "hidden",
+  padding: "10px 18px 10px 12px",
   position: "absolute",
   textAlign: "left",
   top: 0,
   width: "100%",
 };
 
+const symbolCellStyle: React.CSSProperties = {
+  display: "grid",
+  gap: 2,
+  minWidth: 0,
+};
+
 const numericCellStyle: React.CSSProperties = {
   fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   fontVariantNumeric: "tabular-nums",
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
 };
-
-function actionPillStyle(signal: BosSignal): React.CSSProperties {
-  const color = signal === "BUY" ? "#10B981" : signal === "SELL" || signal === "AVOID" ? "#EF4444" : "#F59E0B";
-  return {
-    border: `1px solid ${color}66`,
-    borderRadius: 999,
-    color,
-    display: "inline-flex",
-    fontSize: 11,
-    fontWeight: 900,
-    justifyContent: "center",
-    maxWidth: 84,
-    padding: "4px 8px",
-  };
-}
 
 const emptyStateStyle: React.CSSProperties = {
   color: "#94A3B8",
