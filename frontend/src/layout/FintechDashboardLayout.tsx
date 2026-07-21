@@ -1,15 +1,12 @@
 import { useMemo, useState } from "react";
 
 import { AiExplainerPanel, type BosRagExplanationViewModel } from "../components/AiExplainerPanel";
-import { MarketHeatmap, type MarketHeatmapTicker } from "../components/MarketHeatmap";
+import { BosScoreMatrixTable } from "../components/BosScoreMatrixTable";
 import { SignalTable, type QuantSignalRow } from "../components/SignalTable";
 import { TickerChart } from "../components/TickerChart";
 import { fintechTheme } from "../theme/tokens";
 import type {
-  BosFactorBreakdown,
-  BosSignal,
   BosSignalMarker,
-  MarketHeatmapNode,
   OhlcvBar,
   SignalRow,
 } from "../types/market";
@@ -42,7 +39,6 @@ interface SearchSymbol {
 interface FintechDashboardLayoutProps {
   indices: MarketIndexTicker[];
   signals: SignalRow[];
-  heatmapNodes: MarketHeatmapNode[];
   ohlcvBars: OhlcvBar[];
   markers: BosSignalMarker[];
   ragInsight: RagInsight;
@@ -56,7 +52,6 @@ interface FintechDashboardLayoutProps {
 export function FintechDashboardLayout({
   indices,
   signals,
-  heatmapNodes,
   ohlcvBars,
   markers,
   ragInsight,
@@ -66,12 +61,12 @@ export function FintechDashboardLayout({
   onAlertToggle,
   onSymbolSelect,
 }: FintechDashboardLayoutProps) {
-  const [centerMode, setCenterMode] = useState<"heatmap" | "chart">("heatmap");
+  const [centerMode, setCenterMode] = useState<"matrix" | "chart">("matrix");
   const [localAlertsEnabled, setLocalAlertsEnabled] = useState(alertsEnabled);
   const [drawerSymbol, setDrawerSymbol] = useState<string | null>(null);
   const sectorBySymbol = useMemo(
-    () => new Map(heatmapNodes.map((node) => [node.symbol, node.sector])),
-    [heatmapNodes],
+    () => new Map(signals.map((row) => [row.symbol, row.sector])),
+    [signals],
   );
   const hotSignals = useMemo(
     () =>
@@ -90,22 +85,6 @@ export function FintechDashboardLayout({
         factors: row.factors,
       })),
     [sectorBySymbol, signals],
-  );
-  const heatmapTickers = useMemo(
-    () =>
-      heatmapNodes.map<MarketHeatmapTicker>((node) => ({
-        symbol: node.symbol,
-        companyName: node.companyName,
-        sector: node.sector,
-        marketCap: node.marketCap,
-        sessionVolume: node.volume,
-        matchedPrice: signals.find((row) => row.symbol === node.symbol)?.price ?? 0,
-        priceChangePct: node.priceChangePct,
-        sBos: node.sBos,
-        signal: node.signal,
-        factors: node.factors,
-      })),
-    [heatmapNodes, signals],
   );
   const explanation = useMemo<BosRagExplanationViewModel>(
     () => ({
@@ -208,16 +187,16 @@ export function FintechDashboardLayout({
 
         <section className="bos-panel bos-center-panel">
           <PanelHeader
-            eyebrow="Market flow"
-            title={centerMode === "heatmap" ? "Bản đồ dòng tiền" : "Đồ thị nến"}
+            eyebrow="BOS matrix"
+            title={centerMode === "matrix" ? "Bảng điểm S_BOS chi tiết" : "Đồ thị nến"}
             action={
-              <div className="bos-segmented" aria-label="Chế độ biểu đồ">
+              <div className="bos-segmented" aria-label="Chế độ trung tâm">
                 <button
                   type="button"
-                  aria-pressed={centerMode === "heatmap"}
-                  onClick={() => setCenterMode("heatmap")}
+                  aria-pressed={centerMode === "matrix"}
+                  onClick={() => setCenterMode("matrix")}
                 >
-                  Heatmap
+                  Matrix
                 </button>
                 <button
                   type="button"
@@ -229,9 +208,9 @@ export function FintechDashboardLayout({
               </div>
             }
           />
-          {loading ? <SkeletonChart /> : centerMode === "heatmap" ? (
-            <MarketHeatmap
-              data={heatmapTickers}
+          {loading ? <SkeletonChart /> : centerMode === "matrix" ? (
+            <BosScoreMatrixTable
+              rows={signals}
               height={620}
               onSelectTicker={selectTicker}
             />

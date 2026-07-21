@@ -27,13 +27,14 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (!(await tokenBucket(req, res, { namespace: 'bff-dashboard', capacity: 90, refillPerSecond: 1.5 }))) return;
 
-  const limit = Math.max(5, Math.min(50, Number(req.query.limit) || 20));
+  const requestedLimit = Number(req.query.limit);
+  const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.floor(requestedLimit) : null;
   const includeRag = String(req.query.includeRag || '') === '1';
 
   const signalResult = await withCircuitBreaker(
     'vnstock-signal-os',
     async () => {
-      const result = await callHandler(signalHandler, { limit: String(limit) });
+      const result = await callHandler(signalHandler, limit ? { limit: String(limit) } : {});
       if (!result.payload?.ok) throw new Error(result.payload?.error || 'signals_failed');
       return result.payload;
     },

@@ -1,4 +1,5 @@
 export { AiExplainerPanel } from "./components/AiExplainerPanel";
+export { BosScoreMatrixTable } from "./components/BosScoreMatrixTable";
 export { InteractiveTreemapHeatmap } from "./components/InteractiveTreemapHeatmap";
 export { MarketHeatmap } from "./components/MarketHeatmap";
 export { SignalTable } from "./components/SignalTable";
@@ -26,6 +27,9 @@ export type {
   HeatmapSizeMetric,
   MarketHeatmapTicker,
 } from "./components/MarketHeatmap";
+export type {
+  BosScoreMatrixTableProps,
+} from "./components/BosScoreMatrixTable";
 export type {
   QuantSignalRow,
 } from "./components/SignalTable";

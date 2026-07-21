@@ -41,6 +41,7 @@ export interface SignalRow {
   id: string;
   symbol: string;
   companyName: string;
+  sector: string;
   signal: BosSignal;
   sBos: number;
   price: number;
@@ -48,4 +49,12 @@ export interface SignalRow {
   volume: number;
   updatedAt: string;
   factors: BosFactorBreakdown;
+  pe?: number | null;
+  pb?: number | null;
+  roePct?: number | null;
+  epsGrowthPct?: number | null;
+  debtToEquity?: number | null;
+  rsi14?: number | null;
+  oneMonthChangePct?: number | null;
+  foreignNet5dBillion?: number | null;
 }

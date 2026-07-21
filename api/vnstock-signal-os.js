@@ -79,7 +79,7 @@ function normalizeVci(raw) {
     tradingDate: listing.tradingDate || null,
   };
 }
-async function fetchSignals(limit) {
+async function fetchSignals(limit = null) {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${DEFAULT_GID}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`sheet_${res.status}`);
@@ -89,22 +89,22 @@ async function fetchSignals(limit) {
     signalPrice: toNumber(c[4]), note: c[7] || '', sheetCurrentPrice: toNumber(c[8]), pnl: toNumber(c[11]), pct: toNumber(String(c[12] || '').replace('%', '')),
     holdDays: c[13] || '', dt: parseDateTime(c[1], c[2]),
   })).filter((r) => r.symbol && r.signal);
-  const latestBySymbol = new Map();
-  for (const row of rows) {
-    const prev = latestBySymbol.get(row.symbol);
-    if (!prev || row.dt > prev.dt) latestBySymbol.set(row.symbol, row);
-  }
-  return [...latestBySymbol.values()].sort((a, b) => b.dt - a.dt || a.symbol.localeCompare(b.symbol)).slice(0, limit);
+  const sorted = rows.sort((a, b) => b.dt - a.dt || a.symbol.localeCompare(b.symbol));
+  return limit ? sorted.slice(0, limit) : sorted;
 }
 async function fetchLive(symbols) {
-  if (!symbols.length) return {};
-  const res = await fetch(VCI_URL, { method: 'POST', headers: VCI_HEADERS, body: JSON.stringify({ symbols }) });
-  if (!res.ok) return {};
-  const rows = await res.json().catch(() => []);
+  const uniqueSymbols = [...new Set(symbols.filter(Boolean))];
+  if (!uniqueSymbols.length) return {};
   const out = {};
-  for (const raw of Array.isArray(rows) ? rows : []) {
-    const row = normalizeVci(raw);
-    if (row) out[row.symbol] = row;
+  for (let i = 0; i < uniqueSymbols.length; i += 80) {
+    const chunk = uniqueSymbols.slice(i, i + 80);
+    const res = await fetch(VCI_URL, { method: 'POST', headers: VCI_HEADERS, body: JSON.stringify({ symbols: chunk }) });
+    if (!res.ok) continue;
+    const rows = await res.json().catch(() => []);
+    for (const raw of Array.isArray(rows) ? rows : []) {
+      const row = normalizeVci(raw);
+      if (row) out[row.symbol] = row;
+    }
   }
   return out;
 }
@@ -171,7 +171,8 @@ module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', session.open ? 's-maxage=10, stale-while-revalidate=10' : 's-maxage=120, stale-while-revalidate=600');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (!(await tokenBucket(req, res, { namespace: 'vnstock-signal-os', capacity: 120, refillPerSecond: 2 }))) return;
-  const limit = Math.max(3, Math.min(20, Number(req.query.limit) || 10));
+  const requestedLimit = Number(req.query.limit);
+  const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.floor(requestedLimit) : null;
   try {
     const signals = await fetchSignals(limit);
     const liveMap = await fetchLive(signals.map((r) => r.symbol));

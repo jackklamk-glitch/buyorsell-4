@@ -97,7 +97,7 @@ function App() {
 
     async function loadSignals() {
       try {
-        const response = await fetch(`/api/vnstock-signal-os?limit=20&_=${Date.now()}`, {
+        const response = await fetch(`/api/vnstock-signal-os?_=${Date.now()}`, {
           cache: "no-store",
           headers: { Accept: "application/json" },
         });
@@ -133,7 +133,6 @@ function App() {
     <FintechDashboardLayout
       alertsEnabled
       loading={loading}
-      heatmapNodes={marketData.heatmapNodes}
       indices={tickerTape}
       markers={markers}
       ohlcvBars={ohlcvBars}
@@ -180,6 +179,7 @@ function buildMarketData(rows: VnstockSignalRow[]) {
     id: `${node.symbol}-${rows[index]?.dt ?? index}`,
     symbol: node.symbol,
     companyName: node.companyName,
+    sector: node.sector,
     signal: node.signal,
     sBos: node.sBos,
     price: numberOr(rows[index]?.livePrice, rows[index]?.live?.price, rows[index]?.signalPrice, 0),
@@ -187,6 +187,9 @@ function buildMarketData(rows: VnstockSignalRow[]) {
     volume: node.volume,
     updatedAt: rows[index]?.dt || new Date().toISOString(),
     factors: node.factors,
+    rsi14: rows[index]?.ta?.rsi14 ?? null,
+    oneMonthChangePct: rows[index]?.performance?.pct ?? node.priceChangePct,
+    foreignNet5dBillion: foreignNetBillion(rows[index]),
   }));
 
   const averageChangePct =
@@ -312,6 +315,13 @@ function scoreValuation(row: VnstockSignalRow) {
   if (rsi < 30) return 72;
   if (rsi > 75) return 36;
   return clamp(68 - Math.abs(rsi - 50) * 0.7, 0, 100);
+}
+
+function foreignNetBillion(row: VnstockSignalRow | undefined) {
+  const foreignVolume = numberOr(row?.live?.foreignNetVolume, 0);
+  const price = numberOr(row?.livePrice, row?.live?.price, row?.signalPrice, 0);
+  if (!foreignVolume || !price) return null;
+  return round((foreignVolume * price * 1000) / 1_000_000_000);
 }
 
 function markerTime(dt: string | null | undefined, index: number) {
