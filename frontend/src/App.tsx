@@ -120,7 +120,8 @@ function App() {
     };
   }, []);
 
-  const rows = payload?.data?.length ? payload.data : fallbackRows;
+  const loading = !payload && !error;
+  const rows = payload?.data?.length ? payload.data : error ? fallbackRows : [];
   const selected = rows[0] ?? fallbackRows[0];
   const marketData = useMemo(() => buildMarketData(rows), [rows]);
   const ohlcvBars = useMemo(() => buildSyntheticBars(selected), [selected]);
@@ -131,6 +132,7 @@ function App() {
   return (
     <FintechDashboardLayout
       alertsEnabled
+      loading={loading}
       heatmapNodes={marketData.heatmapNodes}
       indices={tickerTape}
       markers={markers}

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 import type { BosFactorBreakdown, BosSignal } from "../types/market";
@@ -39,17 +39,25 @@ export function SignalTable({
   onSelectTicker,
 }: SignalTableProps) {
   const [activeFilter, setActiveFilter] = useState<SignalFilter>("all");
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const parentRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebouncedQuery(query.trim().toUpperCase()), 180);
+    return () => window.clearTimeout(timeoutId);
+  }, [query]);
 
   const filteredRows = useMemo(
     () =>
       rows.filter((row) => {
+        if (debouncedQuery && !`${row.symbol} ${row.sector}`.toUpperCase().includes(debouncedQuery)) return false;
         if (activeFilter === "strongBuy") return row.sBos >= 80;
         if (activeFilter === "volumeSpike") return row.volume >= row.avgVolume20d * 1.8;
         if (activeFilter === "foreignNetBuy") return row.foreignNetValue > 0;
         return true;
       }),
-    [activeFilter, rows],
+    [activeFilter, debouncedQuery, rows],
   );
 
   const rowVirtualizer = useVirtualizer({
@@ -64,6 +72,13 @@ export function SignalTable({
   return (
     <section aria-label="Virtualized quant signal table">
       <div style={filterBarStyle}>
+        <input
+          aria-label="Quick search ticker"
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Tìm mã..."
+          style={quickSearchStyle}
+          value={query}
+        />
         {filters.map((filter) => (
           <button
             key={filter.id}
@@ -104,13 +119,13 @@ export function SignalTable({
                 >
                   <strong>{row.symbol}</strong>
                   <span>{row.sector}</span>
-                  <span>{formatCurrency(row.matchedPrice)}</span>
+                  <span style={numericCellStyle}>{formatCurrency(row.matchedPrice)}</span>
                   <span style={{ color: row.priceChangePct >= 0 ? "#10B981" : "#EF4444" }}>
                     {row.priceChangePct >= 0 ? "+" : ""}
                     {row.priceChangePct.toFixed(2)}%
                   </span>
-                  <span>{formatNumber(row.volume)}</span>
-                  <span style={{ color: getBosTone(row.sBos), fontWeight: 900 }}>
+                  <span style={numericCellStyle}>{formatNumber(row.volume)}</span>
+                  <span style={{ ...numericCellStyle, color: getBosTone(row.sBos), fontWeight: 900 }}>
                     {row.sBos.toFixed(1)}
                   </span>
                   <span style={actionPillStyle(row.signal)}>{row.signal}</span>
@@ -150,6 +165,18 @@ const filterBarStyle: React.CSSProperties = {
   flexWrap: "wrap",
   gap: 8,
   marginBottom: 10,
+};
+
+const quickSearchStyle: React.CSSProperties = {
+  background: "#0F1623",
+  border: "1px solid #263244",
+  borderRadius: 6,
+  color: "#E5E7EB",
+  fontWeight: 800,
+  minHeight: 34,
+  minWidth: 120,
+  outline: "none",
+  padding: "0 10px",
 };
 
 const tableScrollStyle: React.CSSProperties = {
@@ -210,6 +237,11 @@ const rowStyle: React.CSSProperties = {
   textAlign: "left",
   top: 0,
   width: "100%",
+};
+
+const numericCellStyle: React.CSSProperties = {
+  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  fontVariantNumeric: "tabular-nums",
 };
 
 function actionPillStyle(signal: BosSignal): React.CSSProperties {

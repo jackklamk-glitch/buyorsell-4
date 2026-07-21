@@ -182,7 +182,7 @@ const panelStyle: React.CSSProperties = {
 const summaryGridStyle: React.CSSProperties = {
   display: "grid",
   gap: 12,
-  gridTemplateColumns: "minmax(116px, 0.7fr) minmax(0, 1.3fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(132px, 1fr))",
   minWidth: 0,
 };
 
@@ -206,7 +206,9 @@ const eyebrowStyle: React.CSSProperties = {
 
 const scoreStyle: React.CSSProperties = {
   color: "#10B981",
+  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   fontSize: 34,
+  fontVariantNumeric: "tabular-nums",
   lineHeight: 1,
 };
 

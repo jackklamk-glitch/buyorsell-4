@@ -47,6 +47,7 @@ interface FintechDashboardLayoutProps {
   markers: BosSignalMarker[];
   ragInsight: RagInsight;
   symbols: SearchSymbol[];
+  loading?: boolean;
   alertsEnabled?: boolean;
   onAlertToggle?: (enabled: boolean) => void;
   onSymbolSelect?: (symbol: string) => void;
@@ -60,12 +61,14 @@ export function FintechDashboardLayout({
   markers,
   ragInsight,
   symbols,
+  loading = false,
   alertsEnabled = false,
   onAlertToggle,
   onSymbolSelect,
 }: FintechDashboardLayoutProps) {
   const [centerMode, setCenterMode] = useState<"heatmap" | "chart">("heatmap");
   const [localAlertsEnabled, setLocalAlertsEnabled] = useState(alertsEnabled);
+  const [drawerSymbol, setDrawerSymbol] = useState<string | null>(null);
   const sectorBySymbol = useMemo(
     () => new Map(heatmapNodes.map((node) => [node.symbol, node.sector])),
     [heatmapNodes],
@@ -146,11 +149,34 @@ export function FintechDashboardLayout({
     }),
     [ragInsight, signals],
   );
+  const drawerExplanation = useMemo<BosRagExplanationViewModel>(() => {
+    const selected = drawerSymbol ? signals.find((row) => row.symbol === drawerSymbol) : null;
+    if (!selected) return explanation;
+    return {
+      ...explanation,
+      symbol: selected.symbol,
+      sBos: selected.sBos,
+      weightBreakdown: {
+        momentum: selected.factors.momentum,
+        volumeDelta: selected.factors.volumeDelta,
+        foreignFlow: selected.factors.foreignFlow,
+        valuation: selected.factors.valuation,
+      },
+      actionableScenario: {
+        ...explanation.actionableScenario,
+        stance: `${selected.signal} | S_BOS ${selected.sBos.toFixed(1)}`,
+      },
+    };
+  }, [drawerSymbol, explanation, signals]);
 
   const toggleAlerts = () => {
     const next = !localAlertsEnabled;
     setLocalAlertsEnabled(next);
     onAlertToggle?.(next);
+  };
+  const selectTicker = (symbol: string) => {
+    setDrawerSymbol(symbol);
+    onSymbolSelect?.(symbol);
   };
 
   return (
@@ -161,7 +187,7 @@ export function FintechDashboardLayout({
         indices={indices}
         symbols={symbols}
         onAlertToggle={toggleAlerts}
-        onSymbolSelect={onSymbolSelect}
+        onSymbolSelect={selectTicker}
       />
 
       <section className="bos-grid" aria-label="BuyOrSell 4.0 dashboard">
@@ -171,11 +197,13 @@ export function FintechDashboardLayout({
             title="Tín hiệu realtime"
             meta={`${hotSignals.length} mã`}
           />
-          <SignalTable
-            rows={hotSignals}
-            height={640}
-            onSelectTicker={(symbol) => onSymbolSelect?.(symbol)}
-          />
+          {loading ? <SkeletonStack rows={8} /> : (
+            <SignalTable
+              rows={hotSignals}
+              height={640}
+              onSelectTicker={selectTicker}
+            />
+          )}
         </aside>
 
         <section className="bos-panel bos-center-panel">
@@ -201,11 +229,11 @@ export function FintechDashboardLayout({
               </div>
             }
           />
-          {centerMode === "heatmap" ? (
+          {loading ? <SkeletonChart /> : centerMode === "heatmap" ? (
             <MarketHeatmap
               data={heatmapTickers}
               height={620}
-              onSelectTicker={(symbol) => onSymbolSelect?.(symbol)}
+              onSelectTicker={selectTicker}
             />
           ) : (
             <TickerChart bars={ohlcvBars} markers={markers} height={620} />
@@ -218,10 +246,64 @@ export function FintechDashboardLayout({
             title={`${ragInsight.symbol} AI diễn giải`}
             meta="Schema locked"
           />
-          <AiExplainerPanel explanation={explanation} />
+          {loading ? <SkeletonStack rows={5} /> : <AiExplainerPanel explanation={explanation} />}
         </aside>
       </section>
+      {drawerSymbol ? (
+        <TickerDrawer
+          explanation={drawerExplanation}
+          onClose={() => setDrawerSymbol(null)}
+          symbol={drawerSymbol}
+        />
+      ) : null}
     </main>
+  );
+}
+
+function TickerDrawer({
+  explanation,
+  onClose,
+  symbol,
+}: {
+  explanation: BosRagExplanationViewModel;
+  onClose: () => void;
+  symbol: string;
+}) {
+  return (
+    <div className="bos-drawer-backdrop" role="presentation" onClick={onClose}>
+      <aside
+        aria-label={`${symbol} AI explanation drawer`}
+        className="bos-drawer"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="bos-drawer-header">
+          <div>
+            <div className="bos-eyebrow">Ticker profile</div>
+            <h2>{symbol} Quant AI</h2>
+          </div>
+          <button type="button" onClick={onClose}>Close</button>
+        </div>
+        <AiExplainerPanel explanation={explanation} />
+      </aside>
+    </div>
+  );
+}
+
+function SkeletonStack({ rows }: { rows: number }) {
+  return (
+    <div className="bos-skeleton-stack" aria-label="Loading data">
+      {Array.from({ length: rows }, (_, index) => (
+        <div className="bos-skeleton" key={index} />
+      ))}
+    </div>
+  );
+}
+
+function SkeletonChart() {
+  return (
+    <div className="bos-skeleton-chart" aria-label="Loading chart">
+      <div className="bos-skeleton-chart-grid" />
+    </div>
   );
 }
 
@@ -428,7 +510,13 @@ function DashboardStyles() {
           gap: 22px;
           min-width: max-content;
         }
-        .bos-ticker-item { align-items: center; display: inline-flex; gap: 7px; }
+        .bos-ticker-item {
+          align-items: center;
+          display: inline-flex;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+          font-variant-numeric: tabular-nums;
+          gap: 7px;
+        }
         .bos-ticker-item strong { color: #f8fafc; }
         @keyframes bosTicker {
           from { transform: translateX(0); }
@@ -567,6 +655,67 @@ function DashboardStyles() {
         .bos-scenario div { display: grid; gap: 3px; }
         .bos-scenario dt { color: var(--bos-muted); font-size: 11px; font-weight: 900; text-transform: uppercase; }
         .bos-scenario dd { margin: 0; }
+        .bos-skeleton-stack { display: grid; gap: 10px; }
+        .bos-skeleton, .bos-skeleton-chart {
+          animation: bosPulse 1.2s ease-in-out infinite;
+          background: linear-gradient(90deg, #0f1623 0%, #1f2a3a 48%, #0f1623 100%);
+          background-size: 220% 100%;
+          border: 1px solid var(--bos-border);
+          border-radius: 8px;
+          min-height: 54px;
+        }
+        .bos-skeleton-chart {
+          min-height: 620px;
+          position: relative;
+          overflow: hidden;
+        }
+        .bos-skeleton-chart-grid {
+          background-image:
+            linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+          background-size: 44px 44px;
+          inset: 0;
+          position: absolute;
+        }
+        @keyframes bosPulse {
+          from { background-position: 0% 50%; }
+          to { background-position: -220% 50%; }
+        }
+        .bos-drawer-backdrop {
+          background: rgba(0, 0, 0, 0.58);
+          inset: 0;
+          position: fixed;
+          z-index: 60;
+        }
+        .bos-drawer {
+          background: var(--bos-panel);
+          border-left: 1px solid var(--bos-border);
+          box-shadow: -22px 0 60px rgba(0, 0, 0, 0.42);
+          height: 100vh;
+          margin-left: auto;
+          max-width: 560px;
+          min-width: 0;
+          overflow-y: auto;
+          padding: 16px;
+          width: min(92vw, 560px);
+        }
+        .bos-drawer-header {
+          align-items: center;
+          display: flex;
+          gap: 12px;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        }
+        .bos-drawer-header h2 { margin: 0; }
+        .bos-drawer-header button {
+          background: #0f1623;
+          border: 1px solid var(--bos-border);
+          border-radius: 6px;
+          color: var(--bos-text);
+          cursor: pointer;
+          min-height: 36px;
+          padding: 0 12px;
+        }
         @media (max-width: 1180px) {
           .bos-header { grid-template-columns: 1fr 1fr; }
           .bos-ticker-tape { border-inline: 0; order: 3; grid-column: 1 / -1; }
@@ -579,6 +728,7 @@ function DashboardStyles() {
           .bos-ticker-tape { grid-column: auto; }
           .bos-grid { grid-template-columns: 1fr; }
           .bos-panel { padding: 10px; }
+          .bos-drawer { width: 100vw; max-width: 100vw; }
         }
       `}
     </style>
