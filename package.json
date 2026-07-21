@@ -1,0 +1,14 @@
+{
+  "name": "buyorsell-4",
+  "version": "4.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npx serve .",
+    "check": "node scripts/check.js"
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "redis": "^4.7.0",
+    "vnstock-js": "^1.4.0"
+  }
+}

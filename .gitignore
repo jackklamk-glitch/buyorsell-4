@@ -1,0 +1,7 @@
+.vercel
+.env*
+frontend/dist
+node_modules
+frontend/node_modules
+__pycache__
+*.pyc

@@ -1,0 +1,26 @@
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY api ./api
+COPY scripts/web-server.js ./scripts/web-server.js
+COPY index.html sw.js vercel.json ./
+COPY --from=frontend-builder /app/frontend/dist ./public
+
+EXPOSE 3000
+
+CMD ["node", "scripts/web-server.js"]
