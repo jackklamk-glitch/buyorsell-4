@@ -1,138 +1,342 @@
+import { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import "./styles/tailwind.css";
 import { FintechDashboardLayout } from "./layout/FintechDashboardLayout";
 import type {
+  BosSignal,
   BosSignalMarker,
   MarketHeatmapNode,
   OhlcvBar,
   SignalRow,
 } from "./types/market";
 
-const heatmapNodes: MarketHeatmapNode[] = [
+interface VnstockSignalApiResponse {
+  ok: boolean;
+  fetchedAt?: string;
+  marketSession?: {
+    open: boolean;
+    label: string;
+  };
+  summary?: {
+    total?: number;
+    buy?: number;
+    sell?: number;
+    avgBosScore?: number;
+    top?: string | null;
+  };
+  data?: VnstockSignalRow[];
+  error?: string;
+}
+
+interface VnstockSignalRow {
+  symbol: string;
+  signal: string;
+  signalPrice?: number | null;
+  livePrice?: number | null;
+  bosScore?: number | null;
+  aiConfidence?: number | null;
+  verdict?: string | null;
+  dt?: string | null;
+  date?: string | null;
+  time?: string | null;
+  note?: string | null;
+  live?: {
+    companyName?: string | null;
+    price?: number | null;
+    referencePrice?: number | null;
+    changePct?: number | null;
+    totalVolume?: number | null;
+    foreignNetVolume?: number | null;
+    exchange?: string | null;
+  } | null;
+  performance?: {
+    pct?: number | null;
+  } | null;
+  ta?: {
+    close?: number | null;
+    rsi14?: number | null;
+    ema20?: number | null;
+    sma50?: number | null;
+    macdHistogram?: number | null;
+    stance?: string | null;
+  } | null;
+  news?: Array<{
+    title?: string | null;
+    source?: string | null;
+    date?: string | null;
+  }>;
+}
+
+const fallbackRows: VnstockSignalRow[] = [
   {
     symbol: "TCB",
-    companyName: "Techcombank",
-    sector: "Ngân hàng",
-    marketCap: 121_000_000_000_000,
-    volume: 4_052_000,
-    priceChangePct: 1.2,
-    sBos: 78.4,
     signal: "BUY",
-    factors: { momentum: 82, volumeDelta: 76, foreignFlow: 74, valuation: 79 },
+    livePrice: 34.5,
+    bosScore: 78,
+    verdict: "Theo doi tich cuc",
+    dt: new Date().toISOString(),
+    live: {
+      companyName: "Techcombank",
+      referencePrice: 34.1,
+      totalVolume: 4_052_000,
+      foreignNetVolume: 120_000,
+      exchange: "HSX",
+    },
+    ta: { rsi14: 58, macdHistogram: 0.12, stance: "BULLISH" },
+    news: [],
   },
-  {
-    symbol: "FPT",
-    companyName: "FPT Corporation",
-    sector: "Công nghệ",
-    marketCap: 162_000_000_000_000,
-    volume: 2_420_000,
-    priceChangePct: 0.8,
-    sBos: 73.1,
-    signal: "WATCH",
-    factors: { momentum: 75, volumeDelta: 70, foreignFlow: 72, valuation: 77 },
-  },
-  {
-    symbol: "PLX",
-    companyName: "Petrolimex",
-    sector: "Năng lượng",
-    marketCap: 44_000_000_000_000,
-    volume: 786_300,
-    priceChangePct: -0.6,
-    sBos: 58.6,
-    signal: "HOLD",
-    factors: { momentum: 55, volumeDelta: 62, foreignFlow: 51, valuation: 68 },
-  },
-  {
-    symbol: "AGR",
-    companyName: "Agriseco",
-    sector: "Chứng khoán",
-    marketCap: 3_200_000_000_000,
-    volume: 129_100,
-    priceChangePct: 2.4,
-    sBos: 81.2,
-    signal: "BUY",
-    factors: { momentum: 86, volumeDelta: 79, foreignFlow: 78, valuation: 80 },
-  },
-  {
-    symbol: "VHM",
-    companyName: "Vinhomes",
-    sector: "Bất động sản",
-    marketCap: 186_000_000_000_000,
-    volume: 3_120_000,
-    priceChangePct: -1.1,
-    sBos: 44.2,
-    signal: "AVOID",
-    factors: { momentum: 38, volumeDelta: 42, foreignFlow: 39, valuation: 58 },
-  },
-];
-
-const signals: SignalRow[] = heatmapNodes.map((node) => ({
-  id: `signal-${node.symbol}`,
-  symbol: node.symbol,
-  companyName: node.companyName,
-  signal: node.signal,
-  sBos: node.sBos,
-  price: node.symbol === "TCB" ? 34.5 : node.symbol === "AGR" ? 18.2 : 96.4,
-  priceChangePct: node.priceChangePct,
-  volume: node.volume,
-  updatedAt: new Date().toISOString(),
-  factors: node.factors,
-}));
-
-const bars: OhlcvBar[] = [
-  { time: "2026-07-15", open: 32.1, high: 33.2, low: 31.8, close: 32.9, volume: 2_920_000 },
-  { time: "2026-07-16", open: 32.9, high: 33.7, low: 32.4, close: 33.4, volume: 3_100_000 },
-  { time: "2026-07-17", open: 33.4, high: 34.2, low: 33.0, close: 33.8, volume: 3_640_000 },
-  { time: "2026-07-20", open: 33.8, high: 34.8, low: 33.7, close: 34.5, volume: 4_052_000 },
-  { time: "2026-07-21", open: 34.5, high: 35.1, low: 34.2, close: 34.9, volume: 4_380_000 },
-];
-
-const markers: BosSignalMarker[] = [
-  { id: "buy-TCB-2026-07-17", symbol: "TCB", time: "2026-07-17", signal: "BUY", price: 33.8, sBos: 72.5 },
-  { id: "buy-TCB-2026-07-21", symbol: "TCB", time: "2026-07-21", signal: "BUY", price: 34.9, sBos: 78.4 },
 ];
 
 function App() {
+  const [payload, setPayload] = useState<VnstockSignalApiResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSignals() {
+      try {
+        const response = await fetch("/api/vnstock-signal-os?limit=20", {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) throw new Error(`vnstock_${response.status}`);
+        const nextPayload = (await response.json()) as VnstockSignalApiResponse;
+        if (!cancelled) {
+          setPayload(nextPayload);
+          setError(nextPayload.ok ? null : nextPayload.error ?? "vnstock_payload_not_ok");
+        }
+      } catch (loadError) {
+        if (!cancelled) setError(loadError instanceof Error ? loadError.message : "vnstock_fetch_failed");
+      }
+    }
+
+    void loadSignals();
+    const intervalId = window.setInterval(loadSignals, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  const rows = payload?.data?.length ? payload.data : fallbackRows;
+  const selected = rows[0] ?? fallbackRows[0];
+  const marketData = useMemo(() => buildMarketData(rows), [rows]);
+  const ohlcvBars = useMemo(() => buildSyntheticBars(selected), [selected]);
+  const markers = useMemo(() => buildMarkers(rows), [rows]);
+  const ragInsight = useMemo(() => buildRagInsight(selected, payload, error), [error, payload, selected]);
+
   return (
     <FintechDashboardLayout
       alertsEnabled
-      heatmapNodes={heatmapNodes}
+      heatmapNodes={marketData.heatmapNodes}
       indices={[
-        { symbol: "VNINDEX", value: 1284.73, changePct: 0.64 },
-        { symbol: "VN30", value: 1376.21, changePct: 0.51 },
-        { symbol: "HNX", value: 241.08, changePct: -0.12 },
+        {
+          symbol: "VNINDEX",
+          value: 1284.73,
+          changePct: payload?.marketSession?.open ? 0.64 : 0,
+        },
+        {
+          symbol: "VN30",
+          value: 1376.21,
+          changePct: marketData.averageChangePct,
+        },
+        {
+          symbol: payload?.marketSession?.open ? "REALTIME" : "VNSTOCK",
+          value: payload?.summary?.total ?? marketData.signals.length,
+          changePct: payload?.summary?.avgBosScore ?? 0,
+        },
       ]}
       markers={markers}
-      ohlcvBars={bars}
-      ragInsight={{
-        symbol: "TCB",
-        title: "Sức mạnh dòng tiền ngân hàng",
-        summary:
-          "S_BOS của TCB đang nằm trên ngưỡng hot signal nhờ momentum tích cực, CVD duy trì cao và foreign flow chưa đảo chiều xấu.",
-        catalysts: [
-          "Momentum vượt trung bình nhóm ngân hàng trong micro-batch gần nhất.",
-          "Thanh khoản tăng cùng chiều giá, giảm rủi ro breakout thiếu volume.",
-          "Foreign flow giữ trạng thái hỗ trợ, chưa kích hoạt cảnh báo phân phối.",
-        ],
-        risks: [
-          "Nếu VN30 suy yếu, beta ngành ngân hàng có thể kéo điểm momentum giảm nhanh.",
-          "CVD đảo chiều âm trong phiên chiều sẽ làm confidence bị hạ.",
-        ],
-        scenario: {
-          entryZone: "34.2 - 34.8",
-          stopLoss: "33.1",
-          takeProfit: "36.5 / 38.0",
-        },
-      }}
-      signals={signals}
-      symbols={heatmapNodes.map((node) => ({
+      ohlcvBars={ohlcvBars}
+      ragInsight={ragInsight}
+      signals={marketData.signals}
+      symbols={marketData.heatmapNodes.map((node) => ({
         symbol: node.symbol,
         companyName: node.companyName,
         sector: node.sector,
       }))}
     />
   );
+}
+
+function buildMarketData(rows: VnstockSignalRow[]) {
+  const heatmapNodes: MarketHeatmapNode[] = rows.map((row) => {
+    const price = numberOr(row.livePrice, row.live?.price, row.signalPrice, 0);
+    const volume = Math.max(0, numberOr(row.live?.totalVolume, 0));
+    const sBos = clamp(numberOr(row.bosScore, 50), 0, 100);
+    const foreignFlow = clamp(50 + numberOr(row.live?.foreignNetVolume, 0) / Math.max(volume, 1) * 100, 0, 100);
+    const momentum = scoreMomentum(row);
+    const volumeDelta = scoreVolume(row);
+    const valuation = scoreValuation(row);
+
+    return {
+      symbol: row.symbol,
+      companyName: row.live?.companyName || row.symbol,
+      sector: row.live?.exchange || "VN",
+      marketCap: Math.max(1, price * volume * 1000),
+      volume,
+      priceChangePct: priceChangePct(row),
+      sBos,
+      signal: normalizeSignal(row.signal),
+      factors: {
+        momentum,
+        volumeDelta,
+        foreignFlow,
+        valuation,
+      },
+    };
+  });
+
+  const signals: SignalRow[] = heatmapNodes.map((node, index) => ({
+    id: `${node.symbol}-${rows[index]?.dt ?? index}`,
+    symbol: node.symbol,
+    companyName: node.companyName,
+    signal: node.signal,
+    sBos: node.sBos,
+    price: numberOr(rows[index]?.livePrice, rows[index]?.live?.price, rows[index]?.signalPrice, 0),
+    priceChangePct: node.priceChangePct,
+    volume: node.volume,
+    updatedAt: rows[index]?.dt || new Date().toISOString(),
+    factors: node.factors,
+  }));
+
+  const averageChangePct =
+    heatmapNodes.reduce((sum, node) => sum + node.priceChangePct, 0) / Math.max(1, heatmapNodes.length);
+
+  return { heatmapNodes, signals, averageChangePct };
+}
+
+function buildSyntheticBars(row: VnstockSignalRow): OhlcvBar[] {
+  const close = Math.max(1, numberOr(row.livePrice, row.live?.price, row.signalPrice, row.ta?.close, 10));
+  const volume = Math.max(1, numberOr(row.live?.totalVolume, 100_000));
+  const dates = ["2026-07-15", "2026-07-16", "2026-07-17", "2026-07-20", "2026-07-21"];
+  return dates.map((time, index) => {
+    const drift = (index - 4) * close * 0.012;
+    const base = close + drift;
+    const open = base * (index % 2 === 0 ? 0.992 : 1.006);
+    const barClose = index === dates.length - 1 ? close : base;
+    return {
+      time,
+      open: round(open),
+      high: round(Math.max(open, barClose) * 1.012),
+      low: round(Math.min(open, barClose) * 0.988),
+      close: round(barClose),
+      volume: Math.round(volume * (0.72 + index * 0.08)),
+    };
+  });
+}
+
+function buildMarkers(rows: VnstockSignalRow[]): BosSignalMarker[] {
+  return rows
+    .filter((row) => normalizeSignal(row.signal) === "BUY" || normalizeSignal(row.signal) === "SELL")
+    .slice(0, 8)
+    .map((row, index) => ({
+      id: `${row.symbol}-${row.dt ?? index}`,
+      symbol: row.symbol,
+      time: markerTime(row.dt, index),
+      signal: normalizeSignal(row.signal) === "BUY" ? "BUY" : "SELL",
+      price: numberOr(row.livePrice, row.live?.price, row.signalPrice, 0),
+      sBos: clamp(numberOr(row.bosScore, 50), 0, 100),
+    }));
+}
+
+function buildRagInsight(
+  row: VnstockSignalRow,
+  payload: VnstockSignalApiResponse | null,
+  error: string | null,
+) {
+  const signal = normalizeSignal(row.signal);
+  const price = numberOr(row.livePrice, row.live?.price, row.signalPrice, 0);
+  const sBos = clamp(numberOr(row.bosScore, 50), 0, 100);
+  const session = payload?.marketSession?.label ?? "Dang ket noi Vnstock";
+  const topNews = row.news?.filter((item) => item.title).slice(0, 3) ?? [];
+
+  return {
+    symbol: row.symbol,
+    title: `${signal} | ${row.verdict ?? "Vnstock realtime"}`,
+    summary: error
+      ? `Dang dung du lieu fallback do loi ket noi: ${error}.`
+      : `${row.symbol} cap nhat tu Vnstock: gia ${formatPrice(price)}, S_BOS ${sBos.toFixed(0)}, trang thai ${session}.`,
+    catalysts: [
+      `Tin hieu ${signal} lay tu pipeline Vnstock/BuyOrSell, cap nhat luc ${row.time ?? row.dt ?? "realtime"}.`,
+      `Khoi luong phien ${formatNumber(numberOr(row.live?.totalVolume, 0))}, khoi ngoai ${formatNumber(numberOr(row.live?.foreignNetVolume, 0))}.`,
+      ...(topNews.length ? topNews.map((news) => news.title || "Tin lien quan") : [`TA stance: ${row.ta?.stance ?? "NEUTRAL"}, RSI ${row.ta?.rsi14 ?? "N/A"}.`]),
+    ],
+    risks: [
+      `Foreign net volume am hoac RSI suy yeu se lam diem S_BOS giam nhanh.`,
+      `Neu gia thung vung tin hieu ${formatPrice(numberOr(row.signalPrice, price))}, kich ban can duoc danh gia lai.`,
+    ],
+    scenario: {
+      entryZone: signal === "BUY" ? `${formatPrice(price * 0.985)} - ${formatPrice(price * 1.01)}` : "Khong mo mua moi khi tin hieu la SELL",
+      stopLoss: formatPrice(price * 0.94),
+      takeProfit: `${formatPrice(price * 1.07)} / ${formatPrice(price * 1.14)}`,
+    },
+  };
+}
+
+function normalizeSignal(signal: string): BosSignal {
+  const value = signal.toUpperCase();
+  if (value === "BUY") return "BUY";
+  if (value === "SELL") return "SELL";
+  if (value === "HOLD") return "HOLD";
+  if (value === "AVOID") return "AVOID";
+  return "WATCH";
+}
+
+function priceChangePct(row: VnstockSignalRow) {
+  const apiPct = row.live?.changePct;
+  if (typeof apiPct === "number" && Number.isFinite(apiPct)) return apiPct;
+  const price = numberOr(row.livePrice, row.live?.price, 0);
+  const reference = numberOr(row.live?.referencePrice, 0);
+  if (price > 0 && reference > 0) return round(((price - reference) / reference) * 100);
+  return numberOr(row.performance?.pct, 0);
+}
+
+function scoreMomentum(row: VnstockSignalRow) {
+  const base = row.ta?.stance === "BULLISH" ? 72 : row.ta?.stance === "BEARISH" ? 32 : 52;
+  return clamp(base + numberOr(row.ta?.macdHistogram, 0) * 10, 0, 100);
+}
+
+function scoreVolume(row: VnstockSignalRow) {
+  const volume = numberOr(row.live?.totalVolume, 0);
+  return clamp(volume <= 0 ? 50 : 45 + Math.log10(volume) * 7, 0, 100);
+}
+
+function scoreValuation(row: VnstockSignalRow) {
+  const rsi = numberOr(row.ta?.rsi14, 50);
+  if (rsi < 30) return 72;
+  if (rsi > 75) return 36;
+  return clamp(68 - Math.abs(rsi - 50) * 0.7, 0, 100);
+}
+
+function markerTime(dt: string | null | undefined, index: number) {
+  if (dt) return dt.slice(0, 10);
+  const fallback = ["2026-07-15", "2026-07-16", "2026-07-17", "2026-07-20", "2026-07-21"];
+  return fallback[index % fallback.length];
+}
+
+function numberOr(...values: Array<number | null | undefined>) {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return 0;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function round(value: number) {
+  return Number(value.toFixed(2));
+}
+
+function formatPrice(value: number) {
+  return Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(value);
+}
+
+function formatNumber(value: number) {
+  return Intl.NumberFormat("vi-VN").format(Math.round(value));
 }
 
 createRoot(document.getElementById("root") as HTMLElement).render(<App />);
