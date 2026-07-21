@@ -1,4 +1,6 @@
 export { InteractiveTreemapHeatmap } from "./components/InteractiveTreemapHeatmap";
+export { MarketHeatmap } from "./components/MarketHeatmap";
+export { SignalTable } from "./components/SignalTable";
 export { TickerProfileChart } from "./components/TickerProfileChart";
 export { VirtualSignalTable } from "./components/VirtualSignalTable";
 export { FintechDashboardLayout } from "./layout/FintechDashboardLayout";
@@ -18,3 +20,10 @@ export type {
   RagInsight,
   SearchSymbol,
 } from "./layout/FintechDashboardLayout";
+export type {
+  HeatmapSizeMetric,
+  MarketHeatmapTicker,
+} from "./components/MarketHeatmap";
+export type {
+  QuantSignalRow,
+} from "./components/SignalTable";

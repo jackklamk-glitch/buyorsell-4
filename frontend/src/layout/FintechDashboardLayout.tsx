@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 
-import { InteractiveTreemapHeatmap } from "../components/InteractiveTreemapHeatmap";
+import { MarketHeatmap, type MarketHeatmapTicker } from "../components/MarketHeatmap";
+import { SignalTable, type QuantSignalRow } from "../components/SignalTable";
 import { TickerProfileChart } from "../components/TickerProfileChart";
-import { VirtualSignalTable } from "../components/VirtualSignalTable";
 import { fintechTheme } from "../theme/tokens";
 import type {
   BosFactorBreakdown,
@@ -65,9 +65,43 @@ export function FintechDashboardLayout({
 }: FintechDashboardLayoutProps) {
   const [centerMode, setCenterMode] = useState<"heatmap" | "chart">("heatmap");
   const [localAlertsEnabled, setLocalAlertsEnabled] = useState(alertsEnabled);
+  const sectorBySymbol = useMemo(
+    () => new Map(heatmapNodes.map((node) => [node.symbol, node.sector])),
+    [heatmapNodes],
+  );
   const hotSignals = useMemo(
-    () => signals.filter((row) => row.sBos > 70),
-    [signals],
+    () =>
+      signals.map<QuantSignalRow>((row) => ({
+        id: row.id,
+        symbol: row.symbol,
+        sector: sectorBySymbol.get(row.symbol) ?? "Chưa phân loại",
+        matchedPrice: row.price,
+        priceChangePct: row.priceChangePct,
+        volume: row.volume,
+        avgVolume20d: Math.max(1, row.volume / (row.sBos >= 80 ? 2.1 : 1.2)),
+        sBos: row.sBos,
+        signal: row.signal,
+        foreignNetValue: row.factors.foreignFlow >= 60 ? row.volume * row.price * 0.08 : -row.volume * row.price * 0.03,
+        updatedAt: row.updatedAt,
+        factors: row.factors,
+      })),
+    [sectorBySymbol, signals],
+  );
+  const heatmapTickers = useMemo(
+    () =>
+      heatmapNodes.map<MarketHeatmapTicker>((node) => ({
+        symbol: node.symbol,
+        companyName: node.companyName,
+        sector: node.sector,
+        marketCap: node.marketCap,
+        sessionVolume: node.volume,
+        matchedPrice: signals.find((row) => row.symbol === node.symbol)?.price ?? 0,
+        priceChangePct: node.priceChangePct,
+        sBos: node.sBos,
+        signal: node.signal,
+        factors: node.factors,
+      })),
+    [heatmapNodes, signals],
   );
 
   const toggleAlerts = () => {
@@ -94,7 +128,11 @@ export function FintechDashboardLayout({
             title="S_BOS > 70"
             meta={`${hotSignals.length} mã`}
           />
-          <VirtualSignalTable rows={hotSignals} height={640} onSelect={(row) => onSymbolSelect?.(row.symbol)} />
+          <SignalTable
+            rows={hotSignals}
+            height={640}
+            onSelectTicker={(symbol) => onSymbolSelect?.(symbol)}
+          />
         </aside>
 
         <section className="bos-panel bos-center-panel">
@@ -121,10 +159,10 @@ export function FintechDashboardLayout({
             }
           />
           {centerMode === "heatmap" ? (
-            <InteractiveTreemapHeatmap
-              data={heatmapNodes}
+            <MarketHeatmap
+              data={heatmapTickers}
               height={620}
-              onSelect={(node) => onSymbolSelect?.(node.symbol)}
+              onSelectTicker={(symbol) => onSymbolSelect?.(symbol)}
             />
           ) : (
             <TickerProfileChart bars={ohlcvBars} markers={markers} height={620} />
