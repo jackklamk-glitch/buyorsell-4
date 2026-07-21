@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "start": "npx serve .",
+    "build": "npm run vercel-build",
+    "vercel-build": "cd frontend && npm ci && npm run build",
     "check": "node scripts/check.js"
   },
   "devDependencies": {},

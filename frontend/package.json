@@ -8,7 +8,7 @@
     "dev": "vite --host 127.0.0.1",
     "styles": "tailwindcss -i ./src/styles/tailwind.css -o ./dist/styles.css --minify",
     "typecheck": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
-    "build": "npm run typecheck && npm run styles && node scripts/build-static.js"
+    "build": "npm run typecheck && vite build"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.10.8",

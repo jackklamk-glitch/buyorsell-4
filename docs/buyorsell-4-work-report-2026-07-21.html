@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Báo cáo công việc BuyOrSell 4.0 - 2026-07-21</title>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    body {
+      color: #172033;
+      font-family: Arial, "Segoe UI", sans-serif;
+      font-size: 12px;
+      line-height: 1.48;
+      margin: 0;
+    }
+    h1, h2, h3 { color: #0c3b5f; margin: 0 0 8px; }
+    h1 { font-size: 25px; line-height: 1.18; }
+    h2 {
+      border-bottom: 1px solid #b9c7d6;
+      font-size: 17px;
+      margin-top: 22px;
+      padding-bottom: 4px;
+    }
+    h3 { font-size: 13px; margin-top: 12px; }
+    p { margin: 5px 0 9px; }
+    ul { margin: 5px 0 10px 18px; padding: 0; }
+    li { margin: 2px 0; }
+    table { border-collapse: collapse; margin: 8px 0 12px; width: 100%; }
+    th, td { border: 1px solid #cbd5e1; padding: 6px 7px; text-align: left; vertical-align: top; }
+    th { background: #eaf2f8; color: #0c3b5f; font-weight: 700; }
+    code {
+      background: #eef3f8;
+      border-radius: 3px;
+      color: #102238;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 11px;
+      padding: 1px 3px;
+    }
+    .cover {
+      border: 1px solid #b9c7d6;
+      border-radius: 6px;
+      margin-bottom: 18px;
+      padding: 16px 18px;
+    }
+    .meta {
+      color: #526173;
+      font-size: 11px;
+      margin-top: 8px;
+    }
+    .pill {
+      background: #e8f7ef;
+      border: 1px solid #a7dbc0;
+      border-radius: 999px;
+      color: #15613b;
+      display: inline-block;
+      font-weight: 700;
+      margin-right: 6px;
+      padding: 2px 8px;
+    }
+    .warn {
+      background: #fff7ed;
+      border-left: 3px solid #f59e0b;
+      margin: 8px 0;
+      padding: 7px 9px;
+    }
+    .ok {
+      background: #f0fdf4;
+      border-left: 3px solid #16a34a;
+      margin: 8px 0;
+      padding: 7px 9px;
+    }
+    .page-break { break-before: page; }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <h1>Báo cáo công việc BuyOrSell 4.0</h1>
+    <p><strong>Phạm vi:</strong> Tổng hợp các hạng mục đã thiết kế, viết code, kiểm thử, push GitHub, deploy Vercel và gắn domain <code>buyorsell.vn</code> trong ngày 21/07/2026.</p>
+    <p><span class="pill">Production Ready</span><span class="pill">Vercel 200 OK</span><span class="pill">GitHub Connected</span></p>
+    <p class="meta">Người thực hiện: OpenClaw / Pika. Người nhận: Đại ka. Thời gian tổng hợp: 2026-07-21 14:03-14:05 ICT.</p>
+  </section>
+
+  <h2>1. Tóm Tắt Điều Hành</h2>
+  <p>Trong buổi sáng đến đầu giờ chiều, hệ thống BuyOrSell 4.0 đã được nâng cấp từ một web/app hiện hữu thành kiến trúc 5 tầng có lõi định lượng deterministic, tầng RAG/LLM có schema kiểm soát chặt, frontend visualization React/TypeScript, alerting engine, BFF/API governance, Docker/CI/CD và triển khai Vercel production với domain thật.</p>
+  <table>
+    <tr><th>Hạng mục</th><th>Kết quả</th><th>Trạng thái</th></tr>
+    <tr><td>Tầng 1 - Quant Signal Engine</td><td>Thêm Python/Polars engine tính <code>S_BOS</code> multi-factor và breakdown số cứng.</td><td>Hoàn thành</td></tr>
+    <tr><td>Tầng 2 - Financial RAG & LLM</td><td>Thêm Pydantic schema, prompt khóa LLM chỉ diễn giải theo số cứng và citations.</td><td>Hoàn thành</td></tr>
+    <tr><td>Tầng 3 - Frontend Visualization</td><td>Thêm React components: treemap heatmap, ticker chart, virtual signal table.</td><td>Hoàn thành</td></tr>
+    <tr><td>Tầng 4 - Alerting</td><td>Thêm rules engine, alert endpoint, Web Push helper/service worker.</td><td>Hoàn thành</td></tr>
+    <tr><td>Tầng 5 - API Governance</td><td>Thêm token bucket, Redis store, circuit breaker, BFF dashboard, health endpoint.</td><td>Hoàn thành</td></tr>
+    <tr><td>Deployment</td><td>Thêm Docker/Compose/GitHub Actions; push GitHub; deploy Vercel; gắn domain.</td><td>Hoàn thành</td></tr>
+  </table>
+
+  <h2>2. Kiến Trúc 5 Tầng Đã Triển Khai</h2>
+  <h3>Tầng 1: Quant Signal Engine</h3>
+  <p>Lõi định lượng được tách riêng trong Python để bảo đảm AI không trực tiếp phát tín hiệu hoặc tự tính lại chỉ báo kỹ thuật.</p>
+  <ul>
+    <li>File chính: <code>bos_quant/signal_engine.py</code></li>
+    <li>Entry point Docker/service: <code>scripts/quant_service.py</code></li>
+    <li>CLI batch: <code>scripts/bos_quant_cli.py</code></li>
+    <li>Test: <code>tests/test_bos_quant.py</code></li>
+    <li>Document: <code>docs/quant-signal-engine.md</code></li>
+  </ul>
+  <p>Engine dùng Polars vectorized expressions để tính <code>S_BOS</code> theo Momentum 35%, Volume Delta/CVD 25%, Foreign Flow 25%, Valuation 15%. Output bao gồm score tổng, score từng factor, weighted points, raw factor values, foreign net flow và data quality.</p>
+
+  <h3>Tầng 2: Financial RAG & LLM Engine</h3>
+  <p>Tầng AI được khóa vai trò: chỉ diễn giải dựa trên output Tầng 1 và dữ liệu RAG có nguồn, không tự bịa tín hiệu mua/bán.</p>
+  <ul>
+    <li>Schema: <code>bos_rag/schema.py</code></li>
+    <li>Prompt hệ thống: <code>bos_rag/prompts.py</code></li>
+    <li>Payload/engine helper: <code>bos_rag/engine.py</code></li>
+    <li>Test schema: <code>tests/test_bos_rag_schema.py</code></li>
+    <li>Document: <code>docs/financial-rag-llm-engine.md</code></li>
+  </ul>
+  <p>Schema <code>BosRagExplanation</code> dùng <code>extra="forbid"</code>, validator bắt buộc <code>s_bos == weight_breakdown.total_s_bos</code>, và mọi catalyst/risk phải có citations.</p>
+
+  <h3>Tầng 3: Frontend UX/UI & Visualization</h3>
+  <p>Frontend React/TypeScript được đặt trong thư mục <code>frontend/</code>, độc lập với app static gốc để giảm rủi ro khi nâng cấp.</p>
+  <ul>
+    <li>Treemap heatmap: <code>frontend/src/components/InteractiveTreemapHeatmap.tsx</code></li>
+    <li>Ticker chart: <code>frontend/src/components/TickerProfileChart.tsx</code></li>
+    <li>Virtual table: <code>frontend/src/components/VirtualSignalTable.tsx</code></li>
+    <li>Type contracts: <code>frontend/src/types/market.ts</code></li>
+    <li>Document: <code>docs/frontend-visualization-architecture.md</code></li>
+  </ul>
+  <p>Treemap cho phép đổi size theo vốn hóa/thanh khoản và màu theo giá hoặc <code>S_BOS</code>. Chart dùng TradingView Lightweight Charts với OHLCV và markers mua/bán. Bảng tín hiệu dùng TanStack Virtual để tránh render hàng nghìn DOM rows.</p>
+
+  <h3>Tầng 4: Omnichannel Alerting</h3>
+  <ul>
+    <li>Rules engine: <code>api/lib/alert-rules.js</code></li>
+    <li>Alert endpoint: <code>api/alerts-evaluate.js</code></li>
+    <li>Service worker: <code>sw.js</code></li>
+    <li>Frontend Web Push helper: <code>frontend/src/alerts/webPush.ts</code></li>
+    <li>Document: <code>docs/alerting-api-governance.md</code></li>
+  </ul>
+  <p>Rules hỗ trợ các điều kiện như <code>S_BOS &gt; 70</code>, <code>RSI &lt; 30</code>, <code>foreign_net_flow crosses_above 0</code> và <code>crosses_below 0</code>, sẵn sàng nối Web Push, Telegram Bot hoặc Zalo OA webhook.</p>
+
+  <h3>Tầng 5: API Governance, BFF, Security</h3>
+  <ul>
+    <li>BFF endpoint: <code>api/bff-dashboard.js</code></li>
+    <li>Health endpoint: <code>api/health.js</code></li>
+    <li>Rate limiting: <code>api/lib/rate-limit.js</code></li>
+    <li>Redis/memory store: <code>api/lib/redis-store.js</code></li>
+    <li>Circuit breaker: <code>api/lib/circuit-breaker.js</code></li>
+  </ul>
+  <p>BFF gom Signals + RAG + Alerts trong một request. Token Bucket bảo vệ endpoint nhạy cảm khỏi scraping. Circuit breaker trả stale cache và gắn <code>data_degraded=true</code> khi upstream bị lỗi.</p>
+
+  <div class="page-break"></div>
+  <h2>3. Deployment, GitHub, Vercel, Domain</h2>
+  <h3>Docker và CI/CD</h3>
+  <ul>
+    <li>Python Quant/RAG image: <code>Dockerfile.quant</code></li>
+    <li>Node BFF/Web image: <code>Dockerfile.web</code></li>
+    <li>Compose stack: <code>docker-compose.yml</code></li>
+    <li>Workflow CI/CD: <code>.github/workflows/ci-cd.yml</code></li>
+    <li>Document: <code>docs/production-deployment.md</code></li>
+  </ul>
+  <p>Compose định nghĩa Redis, Quant Engine và Web BFF. Workflow GitHub Actions chạy Python unittest, Node check, frontend typecheck/build, build/push Docker image và deploy SSH khi cấu hình VPS.</p>
+
+  <h3>GitHub</h3>
+  <table>
+    <tr><th>Thông tin</th><th>Giá trị</th></tr>
+    <tr><td>Repository</td><td><code>https://github.com/jackklamk-glitch/buyorsell-4.git</code></td></tr>
+    <tr><td>Commit release chính</td><td><code>61bad39 feat: launch BuyOrSell 4.0 with OpenClaw</code></td></tr>
+    <tr><td>Commit dọn metadata</td><td><code>59b5eed chore: ignore local Vercel project metadata</code></td></tr>
+    <tr><td>Branch</td><td><code>main</code></td></tr>
+  </table>
+
+  <h3>Vercel</h3>
+  <table>
+    <tr><th>Thông tin</th><th>Giá trị</th></tr>
+    <tr><td>Project</td><td><code>buyorsell-4</code></td></tr>
+    <tr><td>Production URL</td><td><code>https://buyorsell-4.vercel.app</code></td></tr>
+    <tr><td>Git alias</td><td><code>https://buyorsell-4-git-main-nguyen-van-dungs-projects-2d1edef6.vercel.app</code></td></tr>
+    <tr><td>Custom domains</td><td><code>https://buyorsell.vn</code>, <code>https://www.buyorsell.vn</code></td></tr>
+  </table>
+
+  <h3>DNS ZoneDNS</h3>
+  <table>
+    <tr><th>Record</th><th>Name</th><th>Value</th><th>Trạng thái</th></tr>
+    <tr><td>A</td><td><code>@</code></td><td><code>76.76.21.21</code></td><td>Đúng chuẩn Vercel</td></tr>
+    <tr><td>CNAME</td><td><code>www</code></td><td><code>cname.vercel-dns.com</code></td><td>Đúng chuẩn Vercel</td></tr>
+  </table>
+
+  <h2>4. Kiểm Thử Và Healthcheck</h2>
+  <table>
+    <tr><th>Lệnh/Endpoint</th><th>Kết quả</th></tr>
+    <tr><td><code>npm.cmd run check</code></td><td><code>BuyOrSell 4.0 Vietnamese production checks passed</code></td></tr>
+    <tr><td><code>npm.cmd run build</code> trong <code>frontend/</code></td><td>TypeScript typecheck và static build pass</td></tr>
+    <tr><td><code>python -m unittest</code></td><td>Quant/RAG tests pass trong quá trình triển khai</td></tr>
+    <tr><td><code>https://buyorsell.vn/</code></td><td>HTTP 200 OK, <code>Server: Vercel</code></td></tr>
+    <tr><td><code>https://www.buyorsell.vn/</code></td><td>HTTP 200 OK, <code>Server: Vercel</code></td></tr>
+    <tr><td><code>https://buyorsell.vn/api/health</code></td><td>HTTP 200 OK, JSON <code>ok: true</code></td></tr>
+    <tr><td><code>https://buyorsell.vn/api/vnstock-signal-os?limit=1</code></td><td>HTTP 200 OK, realtime market API phản hồi</td></tr>
+  </table>
+
+  <div class="ok">
+    <strong>Kết luận vận hành:</strong> Domain đã trỏ Vercel thành công, SSL hoạt động cho cả apex và www, API health đã online. Hệ thống đang ở trạng thái production-ready trên Vercel.
+  </div>
+
+  <h2>5. Những Vấn Đề Đã Xử Lý Trong Ngày</h2>
+  <ul>
+    <li>Sửa lỗi JS snapshot trong <code>index.html</code> khiến <code>npm.cmd run check</code> fail vì chuỗi tiếng Việt bị parse sai.</li>
+    <li>Khởi tạo Git repo riêng trong <code>buyorsell-4</code>, gắn remote GitHub và push source lên nhánh <code>main</code>.</li>
+    <li>Gỡ tình trạng domain còn dính record VPS/cũ; chuyển DNS về chuẩn Vercel.</li>
+    <li>Chuyển domain Vercel khỏi project cũ <code>deploy-signal-dashboard</code> sang project mới <code>buyorsell-4</code>.</li>
+    <li>Xử lý lỗi <code>www.buyorsell.vn</code> bị Vercel SSO/protection do domain mapping chưa đúng project; sau khi add domain chính thức, cả <code>www</code> và apex đều 200.</li>
+    <li>Nối GitHub repo vào Vercel project để sẵn sàng auto-deploy từ nhánh <code>main</code>.</li>
+  </ul>
+
+  <h2>6. Rủi Ro Còn Lại Và Khuyến Nghị</h2>
+  <div class="warn">
+    <strong>Bảo mật domain:</strong> Mật khẩu ZoneDNS đã từng được gửi trong chat. Nên đổi lại mật khẩu sau khi cấu hình xong.
+  </div>
+  <ul>
+    <li>Nếu muốn dùng Docker/VPS sau này, cần cấu hình lại hạ tầng riêng cho Redis/Quant Service; hiện phương án production chính đang là Vercel để đơn giản SSL và domain.</li>
+    <li>Frontend npm từng báo một moderate audit warning trong dependency tree; chưa chạy <code>npm audit fix --force</code> vì có thể gây breaking changes.</li>
+    <li>Các endpoint realtime/RAG nên được theo dõi thêm bằng synthetic checks định kỳ sau khi traffic thật tăng.</li>
+    <li>Nên cấu hình biến môi trường production trên Vercel cho các API cần secret, không commit secret vào repo.</li>
+  </ul>
+
+  <h2>7. Trạng Thái Cuối Cùng</h2>
+  <table>
+    <tr><th>Mục tiêu</th><th>Trạng thái</th></tr>
+    <tr><td>BuyOrSell 4.0 source code</td><td>Đã push GitHub</td></tr>
+    <tr><td>Vercel production</td><td>Đã deploy, status Ready</td></tr>
+    <tr><td>Domain <code>buyorsell.vn</code></td><td>HTTP 200 OK</td></tr>
+    <tr><td>Domain <code>www.buyorsell.vn</code></td><td>HTTP 200 OK</td></tr>
+    <tr><td>API health</td><td>HTTP 200 OK, <code>ok: true</code></td></tr>
+    <tr><td>Auto-deploy GitHub</td><td>Repo đã connected vào Vercel project</td></tr>
+  </table>
+</body>
+</html>
