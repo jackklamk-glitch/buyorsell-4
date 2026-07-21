@@ -167,8 +167,8 @@ export function FintechDashboardLayout({
       <section className="bos-grid" aria-label="BuyOrSell 4.0 dashboard">
         <aside className="bos-panel bos-left-panel">
           <PanelHeader
-            eyebrow="Hot signals"
-            title="S_BOS > 70"
+            eyebrow="Vnstock live"
+            title="Tín hiệu realtime"
             meta={`${hotSignals.length} mã`}
           />
           <SignalTable

@@ -38,7 +38,7 @@ export function SignalTable({
   height = 640,
   onSelectTicker,
 }: SignalTableProps) {
-  const [activeFilter, setActiveFilter] = useState<SignalFilter>("strongBuy");
+  const [activeFilter, setActiveFilter] = useState<SignalFilter>("all");
   const parentRef = useRef<HTMLDivElement | null>(null);
 
   const filteredRows = useMemo(
