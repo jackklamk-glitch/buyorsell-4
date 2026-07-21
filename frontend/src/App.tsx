@@ -97,7 +97,8 @@ function App() {
 
     async function loadSignals() {
       try {
-        const response = await fetch("/api/vnstock-signal-os?limit=20", {
+        const response = await fetch(`/api/vnstock-signal-os?limit=20&_=${Date.now()}`, {
+          cache: "no-store",
           headers: { Accept: "application/json" },
         });
         if (!response.ok) throw new Error(`vnstock_${response.status}`);
@@ -125,28 +126,13 @@ function App() {
   const ohlcvBars = useMemo(() => buildSyntheticBars(selected), [selected]);
   const markers = useMemo(() => buildMarkers(rows), [rows]);
   const ragInsight = useMemo(() => buildRagInsight(selected, payload, error), [error, payload, selected]);
+  const tickerTape = useMemo(() => buildTickerTape(rows, payload), [payload, rows]);
 
   return (
     <FintechDashboardLayout
       alertsEnabled
       heatmapNodes={marketData.heatmapNodes}
-      indices={[
-        {
-          symbol: "VNINDEX",
-          value: 1284.73,
-          changePct: payload?.marketSession?.open ? 0.64 : 0,
-        },
-        {
-          symbol: "VN30",
-          value: 1376.21,
-          changePct: marketData.averageChangePct,
-        },
-        {
-          symbol: payload?.marketSession?.open ? "REALTIME" : "VNSTOCK",
-          value: payload?.summary?.total ?? marketData.signals.length,
-          changePct: payload?.summary?.avgBosScore ?? 0,
-        },
-      ]}
+      indices={tickerTape}
       markers={markers}
       ohlcvBars={ohlcvBars}
       ragInsight={ragInsight}
@@ -205,6 +191,22 @@ function buildMarketData(rows: VnstockSignalRow[]) {
     heatmapNodes.reduce((sum, node) => sum + node.priceChangePct, 0) / Math.max(1, heatmapNodes.length);
 
   return { heatmapNodes, signals, averageChangePct };
+}
+
+function buildTickerTape(rows: VnstockSignalRow[], payload: VnstockSignalApiResponse | null) {
+  const liveRows = rows.slice(0, 10).map((row) => ({
+    symbol: row.symbol,
+    value: numberOr(row.livePrice, row.live?.price, row.signalPrice, 0),
+    changePct: priceChangePct(row),
+  }));
+  if (liveRows.length) return liveRows;
+  return [
+    {
+      symbol: payload?.marketSession?.open ? "REALTIME" : "VNSTOCK",
+      value: payload?.summary?.total ?? 0,
+      changePct: payload?.summary?.avgBosScore ?? 0,
+    },
+  ];
 }
 
 function buildSyntheticBars(row: VnstockSignalRow): OhlcvBar[] {
