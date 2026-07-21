@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-bos-bg text-bos-text font-sans;
+  }
+}
+
+@layer components {
+  .bos-tailwind-panel {
+    @apply rounded-bos border border-bos-border bg-bos-card;
+  }
+
+  .bos-tailwind-buy {
+    @apply text-bos-buy;
+  }
+
+  .bos-tailwind-sell {
+    @apply text-bos-sell;
+  }
+}
